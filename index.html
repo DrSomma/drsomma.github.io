@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sounds Abspielen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            transition: background-color 0.3s;
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+        }
+        .tab:hover {
+            background-color: #0056b3;
+        }
+        .tab.active {
+            background-color: #0056b3;
+        }
+        .content {
+            display: none;
+            text-align: center;
+            width: 100%;
+        }
+        .content.active {
+            display: block;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .active-button {
+            background-color: #218838;
+        }
+        #fade-button {
+            background-color: #dc3545;
+        }
+        #fade-button:hover {
+            background-color: #c82333;
+        }
+        #fade-button:disabled {
+            background-color: #f8d7da;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tabs">
+    <div class="tab" onclick="showTab(1)">1. Quiz</div>
+    <div class="tab" onclick="showTab(2)">2. Eierlaufen</div>
+    <div class="tab" onclick="showTab(3)">3. Computerspiele</div>
+    <div class="tab" onclick="showTab(4)">4. Klinkenputzen</div>
+    <div class="tab" onclick="showTab(5)">5. Tabu</div>
+</div>
+
+<div id="content1" class="content">
+    <button onclick="playSound('sounds/frage.mp3', this)">Frage</button>
+    <button onclick="playSound('sounds/richtig.mp3', this)">Richtig</button>
+    <button onclick="playSound('sounds/falsch.mp3', this)">Falsch</button>
+    <button onclick="playSound('sounds/ende.mp3', this)">Ende</button>
+    <!-- Weitere Buttons für Quiz -->
+</div>
+
+<div id="content2" class="content">
+    <button onclick="playSound('sounds/ententanz.mp3', this)">1. Ententanz</button>
+    <button onclick="playSound('sounds/chickensong.mp3', this)">2. Chicken Song</button>
+    <button onclick="playSound('sounds/circusmusic.mp3', this)">3. Circus Music</button>
+    <!-- Weitere Buttons für Eierlaufen -->
+</div>
+
+<div id="content3" class="content">
+    <button onclick="playSound('sounds/chipichipi.mp3', this)">1. Chipi Chipi</button>
+    <button onclick="playSound('sounds/nevergonnagiveuup.mp3', this)">2. Never Gonna Give You Up</button>
+    <!-- Weitere Buttons für Computerspiele -->
+</div>
+
+<div id="content4" class="content">
+    <a span>Hier bitte Musik über Spotify abspielen.</a>
+    <!-- Weitere Buttons für Klinkenputzen -->
+</div>
+
+<div id="content5" class="content">
+    <a span>Hier wird keine Musik gespielt.</a>
+    <!-- Weitere Buttons für Tabu -->
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <button id="fade-button" onclick="fadeOutSound()" disabled>Ausfaden</button>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+    function showTab(tabIndex) {
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.content');
+
+        tabs.forEach((tab, index) => {
+            tab.classList.toggle('active', index + 1 === tabIndex);
+        });
+
+        contents.forEach((content, index) => {
+            content.classList.toggle('active', index + 1 === tabIndex);
+        });
+
+        localStorage.setItem('activeTab', tabIndex);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const activeTab = localStorage.getItem('activeTab') || 1;
+        showTab(Number(activeTab));
+    });
+
+    let currentAudio = null;
+    let fadeOutInterval = null;
+    let activeButton = null;
+
+    function playSound(src, button) {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+
+        currentAudio = new Audio(src);
+        currentAudio.play();
+        currentAudio.onended = () => {
+            document.getElementById('fade-button').disabled = true;
+            if (activeButton) {
+                activeButton.classList.remove('active-button');
+                activeButton.blur(); // Entfernt den Fokus vom Button
+                activeButton = null;
+            }
+        };
+        document.getElementById('fade-button').disabled = false;
+
+        if (activeButton) {
+            activeButton.classList.remove('active-button');
+        }
+        activeButton = button;
+        activeButton.classList.add('active-button');
+    }
+
+    function fadeOutSound() {
+        if (currentAudio) {
+            let volume = currentAudio.volume;
+            clearInterval(fadeOutInterval);
+
+            fadeOutInterval = setInterval(() => {
+                if (volume > 0.05) {
+                    volume -= 0.05;
+                    currentAudio.volume = volume;
+                } else {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio.volume = 1;
+                    clearInterval(fadeOutInterval);
+                    document.getElementById('fade-button').disabled = true;
+                    if (activeButton) {
+                        activeButton.classList.remove('active-button');
+                        activeButton.blur(); // Entfernt den Fokus vom Button
+                        activeButton = null;
+                    }
+                }
+            }, 50);
+        }
+    }
+</script>
+
+</body>
+</html>
